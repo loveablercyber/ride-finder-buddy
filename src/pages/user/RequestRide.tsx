@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Location, Route } from '@/types';
-import RideMap from '@/components/map/RideMap';
+import OpenStreetMap from '@/components/map/OpenStreetMap';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, MapPin, Clock, DollarSign } from 'lucide-react';
 
@@ -36,13 +36,13 @@ const RequestRide = () => {
   // Handle ride request
   const handleRequestRide = async () => {
     if (!user) {
-      toast.error("You must be logged in to request a ride");
+      toast.error("Você precisa estar logado para solicitar uma corrida");
       navigate('/login');
       return;
     }
     
     if (!pickup || !dropoff || !route) {
-      toast.error("Please select pickup and dropoff locations");
+      toast.error("Por favor, selecione os locais de partida e destino");
       return;
     }
     
@@ -51,7 +51,7 @@ const RequestRide = () => {
       await createRideRequest(pickup, dropoff, route.distance);
       navigate('/user/rides');
     } catch (error) {
-      console.error('Error requesting ride:', error);
+      console.error('Erro ao solicitar corrida:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -67,9 +67,9 @@ const RequestRide = () => {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          Voltar
         </Button>
-        <h1 className="text-2xl font-bold">Request a Ride</h1>
+        <h1 className="text-2xl font-bold">Solicitar uma Corrida</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -78,11 +78,11 @@ const RequestRide = () => {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center">
                 <MapPin className="h-5 w-5 mr-2" />
-                Choose Locations
+                Escolha os Locais
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RideMap 
+              <OpenStreetMap 
                 onSelectPickup={handlePickupSelect}
                 onSelectDropoff={handleDropoffSelect}
                 onCalculateRoute={handleRouteCalculation}
@@ -94,12 +94,12 @@ const RequestRide = () => {
         <div className="md:col-span-1">
           <Card className="glass-panel border-none sticky top-24">
             <CardHeader className="pb-2">
-              <CardTitle>Ride Details</CardTitle>
+              <CardTitle>Detalhes da Corrida</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <div className="text-sm font-medium text-muted-foreground">Pickup</div>
+                  <div className="text-sm font-medium text-muted-foreground">Local de Partida</div>
                   <div className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2 mt-0.5">
                       <div className="h-2 w-2 rounded-full bg-blue-500" />
@@ -110,14 +110,14 @@ const RequestRide = () => {
                           {pickup.address.split(',').slice(0, 2).join(',')}
                         </div>
                       ) : (
-                        <div className="text-sm text-muted-foreground">Select pickup location</div>
+                        <div className="text-sm text-muted-foreground">Selecione o local de partida</div>
                       )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-sm font-medium text-muted-foreground">Destination</div>
+                  <div className="text-sm font-medium text-muted-foreground">Destino</div>
                   <div className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2 mt-0.5">
                       <div className="h-2 w-2 rounded-full bg-red-500" />
@@ -128,7 +128,7 @@ const RequestRide = () => {
                           {dropoff.address.split(',').slice(0, 2).join(',')}
                         </div>
                       ) : (
-                        <div className="text-sm text-muted-foreground">Select destination</div>
+                        <div className="text-sm text-muted-foreground">Selecione o destino</div>
                       )}
                     </div>
                   </div>
@@ -141,7 +141,7 @@ const RequestRide = () => {
                     <div className="space-y-1">
                       <div className="text-sm font-medium text-muted-foreground flex items-center">
                         <Clock className="h-3 w-3 mr-1" />
-                        Estimated Time
+                        Tempo Estimado
                       </div>
                       <div className="text-lg font-medium">
                         {Math.round(route.duration / 60)} min
@@ -150,7 +150,7 @@ const RequestRide = () => {
                     <div className="space-y-1">
                       <div className="text-sm font-medium text-muted-foreground flex items-center">
                         <DollarSign className="h-3 w-3 mr-1" />
-                        Estimated Price
+                        Preço Estimado
                       </div>
                       <div className="text-lg font-medium">
                         R$ {(route.distance * 1.8).toFixed(2)}
@@ -159,11 +159,11 @@ const RequestRide = () => {
                   </div>
                   
                   <div className="text-sm text-muted-foreground">
-                    Distance: {route.distance.toFixed(1)} km
+                    Distância: {route.distance.toFixed(1)} km
                   </div>
                   
                   <div className="text-xs text-muted-foreground">
-                    Price calculated at R$1.80/km
+                    Preço calculado a R$1,80/km
                   </div>
                   
                   <Button 
@@ -172,11 +172,11 @@ const RequestRide = () => {
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
-                      <>Processing...</>
+                      <>Processando...</>
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Confirm Request
+                        Confirmar Solicitação
                       </>
                     )}
                   </Button>
@@ -189,7 +189,7 @@ const RequestRide = () => {
                   className="w-full mt-4" 
                   disabled={!pickup || !dropoff}
                 >
-                  Choose locations to continue
+                  Escolha os locais para continuar
                 </Button>
               )}
             </CardContent>
