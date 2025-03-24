@@ -49,10 +49,11 @@ const RequestRide = () => {
     try {
       setIsProcessing(true);
       await createRideRequest(pickup, dropoff, route.distance);
+      toast.success("Corrida solicitada com sucesso!");
       navigate('/user/rides');
     } catch (error) {
       console.error('Erro ao solicitar corrida:', error);
-    } finally {
+      toast.error("Falha ao solicitar corrida. Tente novamente.");
       setIsProcessing(false);
     }
   };
