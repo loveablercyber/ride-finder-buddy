@@ -7,10 +7,8 @@ import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Card } from '@/components/ui/card';
 import { Location, Route } from '@/types';
 import { toast } from 'sonner';
-
-// Set Mapbox token
-// In a real application, this would come from environment variables or Supabase secrets
-mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+import { useMapbox } from '@/context/MapboxContext';
+import MapboxTokenInput from './MapboxTokenInput';
 
 interface RideMapProps {
   onSelectPickup?: (location: Location) => void;
@@ -37,15 +35,16 @@ const RideMap: React.FC<RideMapProps> = ({
   const pickupMarker = useRef<mapboxgl.Marker | null>(null);
   const dropoffMarker = useRef<mapboxgl.Marker | null>(null);
   const routeLine = useRef<mapboxgl.GeoJSONSource | null>(null);
+  const { token, isTokenSet } = useMapbox();
 
   // Initialize map
   useEffect(() => {
-    if (mapContainer.current && !map.current) {
-      // Check if token is set
-      if (!mapboxgl.accessToken || mapboxgl.accessToken === 'YOUR_MAPBOX_TOKEN') {
-        toast.warning("Please set your Mapbox token for full map functionality");
-      }
-      
+    if (!isTokenSet || !mapContainer.current || map.current) return;
+    
+    // Set Mapbox token
+    mapboxgl.accessToken = token;
+    
+    try {
       // Initialize map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -100,7 +99,7 @@ const RideMap: React.FC<RideMapProps> = ({
       if (!mapOnly) {
         // Add geocoder for pickup
         const pickupGeocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken as string,
+          accessToken: token,
           mapboxgl: mapboxgl as any,
           marker: false,
           placeholder: 'Enter pickup location'
@@ -108,7 +107,7 @@ const RideMap: React.FC<RideMapProps> = ({
         
         // Add geocoder for dropoff
         const dropoffGeocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken as string,
+          accessToken: token,
           mapboxgl: mapboxgl as any,
           marker: false,
           placeholder: 'Enter destination'
@@ -175,6 +174,9 @@ const RideMap: React.FC<RideMapProps> = ({
           }
         });
       }
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      toast.error('Failed to initialize map. Please check your Mapbox token.');
     }
 
     return () => {
@@ -184,11 +186,11 @@ const RideMap: React.FC<RideMapProps> = ({
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token, isTokenSet, mapOnly]);
 
   // Update markers when locations change
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !isTokenSet) return;
     
     // Update pickup marker
     if (pickupLocation) {
@@ -217,11 +219,11 @@ const RideMap: React.FC<RideMapProps> = ({
       calculateRoute();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickupLocation, dropoffLocation, mapLoaded]);
+  }, [pickupLocation, dropoffLocation, mapLoaded, isTokenSet]);
 
   // Draw route if geometry is provided
   useEffect(() => {
-    if (!map.current || !mapLoaded || !routeGeometry) return;
+    if (!map.current || !mapLoaded || !routeGeometry || !isTokenSet) return;
     
     if (routeLine.current) {
       routeLine.current.setData({
@@ -244,11 +246,11 @@ const RideMap: React.FC<RideMapProps> = ({
         maxZoom: 15
       });
     }
-  }, [routeGeometry, mapLoaded]);
+  }, [routeGeometry, mapLoaded, isTokenSet]);
 
   // Calculate route
   const calculateRoute = async () => {
-    if (!pickupMarker.current || !dropoffMarker.current || !onCalculateRoute) return;
+    if (!pickupMarker.current || !dropoffMarker.current || !onCalculateRoute || !isTokenSet) return;
     
     try {
       const start = pickupMarker.current.getLngLat();
@@ -311,6 +313,10 @@ const RideMap: React.FC<RideMapProps> = ({
       toast.error('Failed to calculate route. Please try again.');
     }
   };
+
+  if (!isTokenSet) {
+    return <MapboxTokenInput />;
+  }
 
   return (
     <Card className="overflow-hidden bg-transparent border-none shadow-none">
