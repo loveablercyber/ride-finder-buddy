@@ -170,7 +170,7 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ride.id === rideId
           ? {
               ...ride,
-              status: 'accepted',
+              status: 'accepted' as const,
               acceptedBy: user.id,
               acceptedAt: new Date().toISOString()
             }
@@ -199,7 +199,7 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ride.id === rideId
           ? {
               ...ride,
-              status: 'completed',
+              status: 'completed' as const,
               completedAt: new Date().toISOString()
             }
           : ride
@@ -222,7 +222,7 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ride.id === rideId
           ? {
               ...ride,
-              status: 'cancelled'
+              status: 'cancelled' as const
             }
           : ride
       );

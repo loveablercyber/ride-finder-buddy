@@ -100,16 +100,16 @@ const RideMap: React.FC<RideMapProps> = ({
       if (!mapOnly) {
         // Add geocoder for pickup
         const pickupGeocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
+          accessToken: mapboxgl.accessToken as string,
+          mapboxgl: mapboxgl as any,
           marker: false,
           placeholder: 'Enter pickup location'
         });
         
         // Add geocoder for dropoff
         const dropoffGeocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
+          accessToken: mapboxgl.accessToken as string,
+          mapboxgl: mapboxgl as any,
           marker: false,
           placeholder: 'Enter destination'
         });
