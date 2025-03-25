@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRides } from '@/context/RidesContext';
 import { useAuth } from '@/context/AuthContext';
@@ -22,16 +22,35 @@ const RequestRide = () => {
   // Handle location selection
   const handlePickupSelect = (location: Location) => {
     setPickup(location);
+    checkAndCalculateRoute(location, dropoff);
   };
   
   const handleDropoffSelect = (location: Location) => {
     setDropoff(location);
+    checkAndCalculateRoute(pickup, location);
   };
   
-  // Handle route calculation
+  // Helper function to check and calculate route when both locations are set
+  const checkAndCalculateRoute = (pickup: Location | null, dropoff: Location | null) => {
+    if (pickup && dropoff) {
+      // Import the calculation function directly here to ensure it's used
+      const { calculateRoute } = require('@/services/geocodingService');
+      const calculatedRoute = calculateRoute(pickup, dropoff);
+      setRoute(calculatedRoute);
+    }
+  };
+  
+  // Handle route calculation from the map component
   const handleRouteCalculation = (calculatedRoute: Route) => {
     setRoute(calculatedRoute);
   };
+  
+  // Use effect to ensure route is calculated when both locations are set
+  useEffect(() => {
+    if (pickup && dropoff) {
+      checkAndCalculateRoute(pickup, dropoff);
+    }
+  }, [pickup, dropoff]);
   
   // Handle ride request
   const handleRequestRide = async () => {
@@ -184,11 +203,22 @@ const RequestRide = () => {
                 </div>
               )}
               
-              {!route && (
+              {!route && pickup && dropoff && (
+                <div className="pt-4 border-t animate-fade-in">
+                  <Button 
+                    className="w-full mt-4"
+                    onClick={() => checkAndCalculateRoute(pickup, dropoff)}
+                  >
+                    Calcular Rota
+                  </Button>
+                </div>
+              )}
+              
+              {!route && (!pickup || !dropoff) && (
                 <Button 
                   variant="outline" 
                   className="w-full mt-4" 
-                  disabled={!pickup || !dropoff}
+                  disabled
                 >
                   Escolha os locais para continuar
                 </Button>
