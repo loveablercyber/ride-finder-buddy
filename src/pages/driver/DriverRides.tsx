@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRides } from '@/context/RidesContext';
+import { useMapbox } from '@/context/MapboxContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +19,7 @@ import {
   AlertCircle,
   Car,
   Info,
+  Navigation,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import RideMap from '@/components/map/RideMap';
@@ -29,11 +31,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 const DriverRides = () => {
   const { availableRides, driverRides, acceptRide, completeRide } = useRides();
+  const { isTokenSet, openInMapsApp } = useMapbox();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showRideDetail, setShowRideDetail] = useState(null);
@@ -73,6 +75,10 @@ const DriverRides = () => {
     } finally {
       setProcessingRideId(null);
     }
+  };
+
+  const handleOpenNavigation = (latitude, longitude, label) => {
+    openInMapsApp(latitude, longitude, label);
   };
   
   return (
@@ -160,21 +166,39 @@ const DriverRides = () => {
                       </CardHeader>
                       <CardContent className="pb-3">
                         <div className="space-y-2">
-                          <div className="flex items-center">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                              <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                              </div>
+                              <div className="text-sm truncate max-w-[150px]">
+                                {ride.pickup.address.split(',')[0]}
+                              </div>
                             </div>
-                            <div className="text-sm truncate max-w-[200px]">
-                              {ride.pickup.address.split(',')[0]}
-                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleOpenNavigation(ride.pickup.latitude, ride.pickup.longitude, "Pickup: " + ride.pickup.address.split(',')[0])}
+                            >
+                              <Navigation className="h-3 w-3" />
+                            </Button>
                           </div>
-                          <div className="flex items-center">
-                            <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
-                              <div className="h-2 w-2 rounded-full bg-red-500" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
+                                <div className="h-2 w-2 rounded-full bg-red-500" />
+                              </div>
+                              <div className="text-sm truncate max-w-[150px]">
+                                {ride.dropoff.address.split(',')[0]}
+                              </div>
                             </div>
-                            <div className="text-sm truncate max-w-[200px]">
-                              {ride.dropoff.address.split(',')[0]}
-                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleOpenNavigation(ride.dropoff.latitude, ride.dropoff.longitude, "Dropoff: " + ride.dropoff.address.split(',')[0])}
+                            >
+                              <Navigation className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -257,21 +281,41 @@ const DriverRides = () => {
                       </CardHeader>
                       <CardContent className="pb-3">
                         <div className="space-y-2">
-                          <div className="flex items-center">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                              <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                              </div>
+                              <div className="text-sm truncate max-w-[150px]">
+                                {ride.pickup.address.split(',')[0]}
+                              </div>
                             </div>
-                            <div className="text-sm truncate max-w-[200px]">
-                              {ride.pickup.address.split(',')[0]}
-                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleOpenNavigation(ride.pickup.latitude, ride.pickup.longitude, "Pickup: " + ride.pickup.address.split(',')[0])}
+                            >
+                              <Navigation className="h-3 w-3 mr-1" />
+                              Navigate
+                            </Button>
                           </div>
-                          <div className="flex items-center">
-                            <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
-                              <div className="h-2 w-2 rounded-full bg-red-500" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
+                                <div className="h-2 w-2 rounded-full bg-red-500" />
+                              </div>
+                              <div className="text-sm truncate max-w-[150px]">
+                                {ride.dropoff.address.split(',')[0]}
+                              </div>
                             </div>
-                            <div className="text-sm truncate max-w-[200px]">
-                              {ride.dropoff.address.split(',')[0]}
-                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleOpenNavigation(ride.dropoff.latitude, ride.dropoff.longitude, "Dropoff: " + ride.dropoff.address.split(',')[0])}
+                            >
+                              <Navigation className="h-3 w-3 mr-1" />
+                              Navigate
+                            </Button>
                           </div>
                           {ride.userPhone && (
                             <div className="flex items-center mt-2">
@@ -289,7 +333,7 @@ const DriverRides = () => {
                           size="sm"
                           onClick={() => setShowRideDetail(ride)}
                         >
-                          View on Map
+                          View Details
                         </Button>
                         <Button 
                           size="sm"
@@ -440,23 +484,61 @@ const DriverRides = () => {
                 </div>
               </div>
               
-              <div>
-                <h4 className="text-sm font-medium mb-2">Route</h4>
-                <RideMap
-                  mapOnly={true}
-                  pickupLocation={showRideDetail.pickup}
-                  dropoffLocation={showRideDetail.dropoff}
-                />
-              </div>
+              {isTokenSet ? (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Route</h4>
+                  <RideMap
+                    mapOnly={true}
+                    pickupLocation={showRideDetail.pickup}
+                    dropoffLocation={showRideDetail.dropoff}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Navigation</h4>
+                  <MapboxTokenInput 
+                    pickup={showRideDetail.pickup}
+                    dropoff={showRideDetail.dropoff}
+                  />
+                </div>
+              )}
               
               <div className="space-y-1">
                 <h4 className="text-sm font-medium">Pickup</h4>
-                <p className="text-sm">{showRideDetail.pickup.address}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">{showRideDetail.pickup.address}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleOpenNavigation(
+                      showRideDetail.pickup.latitude, 
+                      showRideDetail.pickup.longitude, 
+                      "Pickup: " + showRideDetail.pickup.address.split(',')[0]
+                    )}
+                  >
+                    <Navigation className="h-3 w-3 mr-1" />
+                    Navigate
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-1">
                 <h4 className="text-sm font-medium">Dropoff</h4>
-                <p className="text-sm">{showRideDetail.dropoff.address}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">{showRideDetail.dropoff.address}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleOpenNavigation(
+                      showRideDetail.dropoff.latitude, 
+                      showRideDetail.dropoff.longitude, 
+                      "Dropoff: " + showRideDetail.dropoff.address.split(',')[0]
+                    )}
+                  >
+                    <Navigation className="h-3 w-3 mr-1" />
+                    Navigate
+                  </Button>
+                </div>
               </div>
             </div>
           )}
