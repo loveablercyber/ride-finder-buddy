@@ -9,6 +9,7 @@ import { Location, Route } from '@/types';
 import OpenStreetMap from '@/components/map/OpenStreetMap';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, MapPin, Clock, DollarSign } from 'lucide-react';
+import { calculateRoute } from '@/services/geocodingService'; // Import properly at the top
 
 const RequestRide = () => {
   const [pickup, setPickup] = useState<Location | null>(null);
@@ -33,8 +34,7 @@ const RequestRide = () => {
   // Helper function to check and calculate route when both locations are set
   const checkAndCalculateRoute = (pickup: Location | null, dropoff: Location | null) => {
     if (pickup && dropoff) {
-      // Import the calculation function directly here to ensure it's used
-      const { calculateRoute } = require('@/services/geocodingService');
+      // Use the imported function directly instead of requiring it
       const calculatedRoute = calculateRoute(pickup, dropoff);
       setRoute(calculatedRoute);
     }
