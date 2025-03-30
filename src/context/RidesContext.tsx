@@ -109,7 +109,7 @@ export const useRides = () => useContext(RidesContext);
 
 export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [rides, setRides] = useState<RideRequest[]>([]);
-  const { user } = useAuth();
+  const { user, deductCredit } = useAuth();
 
   useEffect(() => {
     // Load rides from localStorage or use sample data
@@ -155,6 +155,12 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
+    // Check if user has debt
+    if (user.accountBalance && user.accountBalance < 0) {
+      toast.error("You have outstanding debt. Please add credit to your account before requesting a ride.");
+      return;
+    }
+
     try {
       // Calculate price based on R$1.8 per km
       const price = parseFloat((distance * 1.8).toFixed(2));
@@ -180,7 +186,10 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setRides(updatedRides);
       localStorage.setItem('rides', JSON.stringify(updatedRides));
       
-      toast.success("Ride requested successfully! Your verification code is: " + verificationCode);
+      toast.success("Ride requested successfully!");
+      toast.info(`Your verification code is: ${verificationCode}`, {
+        duration: 10000 // Show for 10 seconds
+      });
       return;
     } catch (error) {
       console.error('Error creating ride request:', error);
@@ -323,6 +332,12 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     try {
+      const ride = rides.find(r => r.id === rideId);
+      if (!ride) {
+        toast.error("Ride not found");
+        return;
+      }
+
       const updatedRides = rides.map(ride => 
         ride.id === rideId
           ? {
@@ -336,6 +351,9 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setRides(updatedRides);
       localStorage.setItem('rides', JSON.stringify(updatedRides));
+      
+      // Deduct fee from passenger's account (handled in AuthContext)
+      deductCredit(10);
       
       toast.success("Ride cancelled with R$10 fee charged to passenger.");
     } catch (error) {

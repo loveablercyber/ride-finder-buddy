@@ -5,6 +5,7 @@ export interface User {
   email: string;
   role: 'admin' | 'user' | 'driver';
   avatar?: string;
+  accountBalance?: number; // Added account balance field
 }
 
 export interface Location {

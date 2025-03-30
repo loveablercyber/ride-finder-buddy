@@ -9,6 +9,9 @@ type AuthContextType = {
   login: (email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: string) => Promise<void>;
+  addCredit: (amount: number) => void;
+  deductCredit: (amount: number) => void;
+  hasDebt: () => boolean;
 };
 
 const defaultUser: User = {
@@ -16,7 +19,8 @@ const defaultUser: User = {
   name: 'John Doe',
   email: 'john@example.com',
   role: 'user',
-  avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random'
+  avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
+  accountBalance: 100 // Starting with some balance
 };
 
 const driverUser: User = {
@@ -24,7 +28,8 @@ const driverUser: User = {
   name: 'Jane Driver',
   email: 'jane@example.com',
   role: 'driver',
-  avatar: 'https://ui-avatars.com/api/?name=Jane+Driver&background=random'
+  avatar: 'https://ui-avatars.com/api/?name=Jane+Driver&background=random',
+  accountBalance: 500 // Drivers start with more balance
 };
 
 const adminUser: User = {
@@ -32,7 +37,8 @@ const adminUser: User = {
   name: 'Admin User',
   email: 'admin@example.com',
   role: 'admin',
-  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=random'
+  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=random',
+  accountBalance: 1000 // Admin has the most balance
 };
 
 // Create a default context with initial values
@@ -42,6 +48,9 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   register: async () => {},
+  addCredit: () => {},
+  deductCredit: () => {},
+  hasDebt: () => false,
 });
 
 // Export the useAuth hook to be used in components
@@ -109,7 +118,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         name,
         email,
         role: role as 'admin' | 'user' | 'driver',
-        avatar: `https://ui-avatars.com/api/?name=${name.replace(' ', '+')}&background=random`
+        avatar: `https://ui-avatars.com/api/?name=${name.replace(' ', '+')}&background=random`,
+        accountBalance: role === 'driver' ? 500 : 100 // Initial balance based on role
       };
       
       setUser(newUser);
@@ -124,8 +134,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Function to add credit to user's account
+  const addCredit = (amount: number) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      accountBalance: (user.accountBalance || 0) + amount
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    toast.success(`Added R$${amount.toFixed(2)} to your account`);
+  };
+
+  // Function to deduct credit from user's account
+  const deductCredit = (amount: number) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      accountBalance: (user.accountBalance || 0) - amount
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    toast.info(`Deducted R$${amount.toFixed(2)} from your account`);
+  };
+
+  // Function to check if user has debt
+  const hasDebt = () => {
+    if (!user) return false;
+    return (user.accountBalance || 0) < 0;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      register, 
+      addCredit, 
+      deductCredit, 
+      hasDebt 
+    }}>
       {children}
     </AuthContext.Provider>
   );

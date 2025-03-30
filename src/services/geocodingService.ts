@@ -10,6 +10,37 @@ export const geocodeAddress = async (address: string): Promise<Location | null> 
     // Simulação de geocodificação
     console.log(`Geocoding address: ${address}`);
     
+    // Check if this is a city lookup
+    const isCityLookup = address.split(',').length <= 2 && !address.match(/\d+/);
+    
+    // Base coordinates for known cities
+    const cityCoordinates: Record<string, [number, number]> = {
+      'São Paulo': [-23.5505, -46.6333],
+      'Rio de Janeiro': [-22.9068, -43.1729],
+      'Belo Horizonte': [-19.9167, -43.9345],
+      'Salvador': [-12.9714, -38.5014],
+      'Curitiba': [-25.4289, -49.2671],
+      'Porto Alegre': [-30.0346, -51.2177],
+      'Campinas': [-22.9071, -47.0625],
+      'Santos': [-23.9619, -46.3322],
+      'Guarulhos': [-23.4543, -46.5337],
+      'Ribeirão Preto': [-21.1775, -47.8102],
+    };
+    
+    // For city lookups, use fixed coordinates
+    if (isCityLookup) {
+      for (const city in cityCoordinates) {
+        if (address.includes(city)) {
+          const [lat, lng] = cityCoordinates[city];
+          return {
+            latitude: lat,
+            longitude: lng,
+            address: address,
+          };
+        }
+      }
+    }
+    
     // Adicionando um pouco de aleatoriedade para simular diferentes localizações
     const randomLat = -23.55 + (Math.random() - 0.5) * 0.1;
     const randomLng = -46.63 + (Math.random() - 0.5) * 0.1;

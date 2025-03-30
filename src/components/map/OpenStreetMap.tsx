@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Location, Route } from '@/types';
-import { geocodeAddress, calculateRoute } from '@/services/geocodingService';
+import { geocodeAddress, calculateRoute, extractCityFromAddress } from '@/services/geocodingService';
 import { toast } from 'sonner';
 import CitySelector from './CitySelector';
 
@@ -95,6 +95,19 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   // Função para lidar com a seleção de cidade
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
+    
+    // Center map on the selected city
+    if (city) {
+      const cityAddress = city + ", Brasil";
+      geocodeAddress(cityAddress).then(location => {
+        if (location) {
+          setCenter([location.latitude, location.longitude]);
+          setZoom(13); // Zoom in to city level
+        }
+      }).catch(error => {
+        console.error("Error focusing on city:", error);
+      });
+    }
   };
 
   // Construir o endereço completo incluindo a cidade e o número
