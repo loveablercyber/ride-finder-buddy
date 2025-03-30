@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRides } from '@/context/RidesContext';
@@ -35,7 +34,7 @@ import {
 
 const DriverRides = () => {
   const { availableRides, driverRides, acceptRide, completeRide } = useRides();
-  const { isTokenSet, openInMapsApp } = useMapbox();
+  const { openInMapsApp } = useMapbox();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showRideDetail, setShowRideDetail] = useState(null);
@@ -484,24 +483,60 @@ const DriverRides = () => {
                 </div>
               </div>
               
-              {isTokenSet ? (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Route</h4>
-                  <RideMap
-                    mapOnly={true}
-                    pickupLocation={showRideDetail.pickup}
-                    dropoffLocation={showRideDetail.dropoff}
-                  />
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium mb-2">Navigation</h4>
+                <div className="space-y-4">
+                  {showRideDetail.pickup && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                          <div className="h-2 w-2 rounded-full bg-blue-500" />
+                        </div>
+                        <div className="text-sm">
+                          {showRideDetail.pickup.address.split(',').slice(0, 2).join(',')}
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openInMapsApp(
+                          showRideDetail.pickup.latitude, 
+                          showRideDetail.pickup.longitude, 
+                          "Pickup location"
+                        )}
+                      >
+                        <Navigation className="h-4 w-4 mr-2" />
+                        Navigate
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {showRideDetail.dropoff && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                        </div>
+                        <div className="text-sm">
+                          {showRideDetail.dropoff.address.split(',').slice(0, 2).join(',')}
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openInMapsApp(
+                          showRideDetail.dropoff.latitude, 
+                          showRideDetail.dropoff.longitude, 
+                          "Dropoff location"
+                        )}
+                      >
+                        <Navigation className="h-4 w-4 mr-2" />
+                        Navigate
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Navigation</h4>
-                  <MapboxTokenInput 
-                    pickup={showRideDetail.pickup}
-                    dropoff={showRideDetail.dropoff}
-                  />
-                </div>
-              )}
+              </div>
               
               <div className="space-y-1">
                 <h4 className="text-sm font-medium">Pickup</h4>
