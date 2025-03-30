@@ -30,11 +30,18 @@ export interface RideRequest {
   dropoff: Location;
   distance: number;
   price: number;
-  status: 'pending' | 'accepted' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'en_route' | 'arrived' | 'in_progress' | 'completed' | 'cancelled';
   createdAt: string;
   acceptedBy?: string;
   acceptedAt?: string;
+  enRouteAt?: string;
+  arrivedAt?: string;
+  inProgressAt?: string;
   completedAt?: string;
+  cancelledAt?: string;
+  verificationCode?: string;
+  waitingTime?: number;
+  cancellationFee?: number;
   route?: Route;
 }
 

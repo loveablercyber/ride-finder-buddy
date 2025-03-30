@@ -11,8 +11,13 @@ type RidesContextType = {
   driverRides: RideRequest[];
   createRideRequest: (pickup: Location, dropoff: Location, distance: number) => Promise<void>;
   acceptRide: (rideId: string) => Promise<void>;
+  startNavigation: (rideId: string) => Promise<void>;
+  arrivedAtPickup: (rideId: string) => Promise<void>;
+  startRide: (rideId: string, code: string) => Promise<boolean>;
   completeRide: (rideId: string) => Promise<void>;
+  cancelRideWithFee: (rideId: string) => Promise<void>;
   cancelRide: (rideId: string) => Promise<void>;
+  generateVerificationCode: (rideId: string) => Promise<string>;
 };
 
 // Sample ride data
@@ -91,8 +96,13 @@ const RidesContext = createContext<RidesContextType>({
   driverRides: [],
   createRideRequest: async () => {},
   acceptRide: async () => {},
+  startNavigation: async () => {},
+  arrivedAtPickup: async () => {},
+  startRide: async () => false,
   completeRide: async () => {},
+  cancelRideWithFee: async () => {},
   cancelRide: async () => {},
+  generateVerificationCode: async () => '',
 });
 
 export const useRides = () => useContext(RidesContext);
@@ -123,6 +133,22 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ? rides.filter(ride => ride.acceptedBy === user.id)
     : [];
 
+  // Generate a 4-digit verification code
+  const generateVerificationCode = async (rideId: string): Promise<string> => {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    const updatedRides = rides.map(ride => 
+      ride.id === rideId
+        ? { ...ride, verificationCode: code }
+        : ride
+    );
+    
+    setRides(updatedRides);
+    localStorage.setItem('rides', JSON.stringify(updatedRides));
+    
+    return code;
+  };
+
   const createRideRequest = async (pickup: Location, dropoff: Location, distance: number) => {
     if (!user) {
       toast.error("You must be logged in to request a ride");
@@ -132,6 +158,9 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       // Calculate price based on R$1.8 per km
       const price = parseFloat((distance * 1.8).toFixed(2));
+      
+      // Generate verification code
+      const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
       
       const newRide: RideRequest = {
         id: Math.random().toString(36).substring(2, 9),
@@ -144,13 +173,14 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         price,
         status: 'pending',
         createdAt: new Date().toISOString(),
+        verificationCode
       };
       
       const updatedRides = [...rides, newRide];
       setRides(updatedRides);
       localStorage.setItem('rides', JSON.stringify(updatedRides));
       
-      toast.success("Ride requested successfully!");
+      toast.success("Ride requested successfully! Your verification code is: " + verificationCode);
       return;
     } catch (error) {
       console.error('Error creating ride request:', error);
@@ -184,6 +214,133 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (error) {
       console.error('Error accepting ride:', error);
       toast.error("Failed to accept ride");
+      throw error;
+    }
+  };
+
+  const startNavigation = async (rideId: string) => {
+    if (!user || user.role !== 'driver') {
+      toast.error("Only drivers can start navigation");
+      return;
+    }
+
+    try {
+      const updatedRides = rides.map(ride => 
+        ride.id === rideId
+          ? {
+              ...ride,
+              status: 'en_route' as const,
+              enRouteAt: new Date().toISOString()
+            }
+          : ride
+      );
+      
+      setRides(updatedRides);
+      localStorage.setItem('rides', JSON.stringify(updatedRides));
+      
+      toast.success("Navigation started! Passenger has been notified.");
+    } catch (error) {
+      console.error('Error starting navigation:', error);
+      toast.error("Failed to start navigation");
+      throw error;
+    }
+  };
+
+  const arrivedAtPickup = async (rideId: string) => {
+    if (!user || user.role !== 'driver') {
+      toast.error("Only drivers can mark arrival");
+      return;
+    }
+
+    try {
+      const updatedRides = rides.map(ride => 
+        ride.id === rideId
+          ? {
+              ...ride,
+              status: 'arrived' as const,
+              arrivedAt: new Date().toISOString(),
+              waitingTime: 180 // 3 minutes in seconds
+            }
+          : ride
+      );
+      
+      setRides(updatedRides);
+      localStorage.setItem('rides', JSON.stringify(updatedRides));
+      
+      toast.success("Marked as arrived at pickup location!");
+    } catch (error) {
+      console.error('Error marking arrival:', error);
+      toast.error("Failed to mark arrival");
+      throw error;
+    }
+  };
+
+  const startRide = async (rideId: string, code: string): Promise<boolean> => {
+    if (!user || user.role !== 'driver') {
+      toast.error("Only drivers can start rides");
+      return false;
+    }
+
+    try {
+      const ride = rides.find(r => r.id === rideId);
+      
+      if (!ride) {
+        toast.error("Ride not found");
+        return false;
+      }
+      
+      if (ride.verificationCode !== code) {
+        toast.error("Invalid verification code");
+        return false;
+      }
+      
+      const updatedRides = rides.map(ride => 
+        ride.id === rideId
+          ? {
+              ...ride,
+              status: 'in_progress' as const,
+              inProgressAt: new Date().toISOString()
+            }
+          : ride
+      );
+      
+      setRides(updatedRides);
+      localStorage.setItem('rides', JSON.stringify(updatedRides));
+      
+      toast.success("Ride started successfully!");
+      return true;
+    } catch (error) {
+      console.error('Error starting ride:', error);
+      toast.error("Failed to start ride");
+      return false;
+    }
+  };
+
+  const cancelRideWithFee = async (rideId: string) => {
+    if (!user || user.role !== 'driver') {
+      toast.error("Only drivers can cancel rides with fee");
+      return;
+    }
+
+    try {
+      const updatedRides = rides.map(ride => 
+        ride.id === rideId
+          ? {
+              ...ride,
+              status: 'cancelled' as const,
+              cancelledAt: new Date().toISOString(),
+              cancellationFee: 10 // R$10 fee
+            }
+          : ride
+      );
+      
+      setRides(updatedRides);
+      localStorage.setItem('rides', JSON.stringify(updatedRides));
+      
+      toast.success("Ride cancelled with R$10 fee charged to passenger.");
+    } catch (error) {
+      console.error('Error cancelling ride with fee:', error);
+      toast.error("Failed to cancel ride");
       throw error;
     }
   };
@@ -222,7 +379,8 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ride.id === rideId
           ? {
               ...ride,
-              status: 'cancelled' as const
+              status: 'cancelled' as const,
+              cancelledAt: new Date().toISOString()
             }
           : ride
       );
@@ -246,9 +404,14 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         userRides, 
         driverRides,
         createRideRequest, 
-        acceptRide, 
-        completeRide, 
-        cancelRide 
+        acceptRide,
+        startNavigation,
+        arrivedAtPickup,
+        startRide,
+        completeRide,
+        cancelRideWithFee,
+        cancelRide,
+        generateVerificationCode
       }}
     >
       {children}

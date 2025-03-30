@@ -17,7 +17,7 @@ export const geocodeAddress = async (address: string): Promise<Location | null> 
     return {
       latitude: randomLat,
       longitude: randomLng,
-      address: address, // Agora retornamos o endereço completo incluindo número e cidade
+      address: address, // Incluindo o endereço completo com número e cidade
     };
   } catch (error) {
     console.error('Error geocoding address:', error);
@@ -62,4 +62,15 @@ export const calculateRoute = (origin: Location, destination: Location): Route =
       coordinates: coordinates
     }
   };
+};
+
+// Helper function to create a complete address with number and city
+export const formatCompleteAddress = (street: string, number: string, city: string): string => {
+  return `${street}, ${number}, ${city}`;
+};
+
+// Função auxiliar para extrair a cidade do endereço completo
+export const extractCityFromAddress = (address: string): string => {
+  const parts = address.split(', ');
+  return parts.length > 2 ? parts[2] : '';
 };
