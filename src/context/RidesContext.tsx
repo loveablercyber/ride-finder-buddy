@@ -262,13 +262,17 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     try {
+      // Generate a new verification code when driver arrives
+      const code = await generateVerificationCode(rideId);
+      
       const updatedRides = rides.map(ride => 
         ride.id === rideId
           ? {
               ...ride,
               status: 'arrived' as const,
               arrivedAt: new Date().toISOString(),
-              waitingTime: 180 // 3 minutes in seconds
+              waitingTime: 180, // 3 minutes in seconds
+              verificationCode: code // Set the new verification code
             }
           : ride
       );
@@ -277,6 +281,13 @@ export const RidesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('rides', JSON.stringify(updatedRides));
       
       toast.success("Marked as arrived at pickup location!");
+      
+      // Find the ride to get the user ID
+      const ride = updatedRides.find(r => r.id === rideId);
+      if (ride) {
+        // Display a notification to the user that their code is ready
+        toast.info(`Verification code has been generated for the passenger.`);
+      }
     } catch (error) {
       console.error('Error marking arrival:', error);
       toast.error("Failed to mark arrival");

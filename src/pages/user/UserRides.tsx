@@ -12,7 +12,8 @@ import {
   DollarSign,
   Plus,
   Search,
-  Info
+  Info,
+  Clipboard
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +25,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 const UserRides = () => {
   const { userRides } = useRides();
@@ -46,7 +49,9 @@ const UserRides = () => {
 
   // Group rides by status
   const pendingRides = userRides.filter(ride => ride.status === 'pending');
-  const activeRides = userRides.filter(ride => ride.status === 'accepted');
+  const activeRides = userRides.filter(ride => 
+    ['accepted', 'en_route', 'arrived', 'in_progress'].includes(ride.status)
+  );
   const completedRides = userRides.filter(ride => 
     ride.status === 'completed' || ride.status === 'cancelled'
   );
@@ -108,6 +113,9 @@ const UserRides = () => {
                   <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="en_route">En Route</SelectItem>
+                  <SelectItem value="arrived">Arrived</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectGroup>
@@ -158,6 +166,13 @@ const RidesList = ({ rides }) => {
 };
 
 const RideCard = ({ ride }) => {
+  const copyVerificationCode = () => {
+    if (ride.verificationCode) {
+      navigator.clipboard.writeText(ride.verificationCode);
+      toast.success("Verification code copied to clipboard!");
+    }
+  };
+
   return (
     <Card className="glass-panel border-none overflow-hidden">
       <CardHeader className="pb-2">
@@ -200,6 +215,23 @@ const RideCard = ({ ride }) => {
           </div>
         </div>
 
+        {/* Verification Code Alert - Show when status is "arrived" */}
+        {ride.status === 'arrived' && ride.verificationCode && (
+          <Alert className="mt-2 mb-3 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-900/30">
+            <div className="flex justify-between items-center">
+              <div>
+                <AlertTitle className="text-yellow-800 dark:text-yellow-400">Verification Code</AlertTitle>
+                <AlertDescription className="text-yellow-800 dark:text-yellow-400">
+                  Share this code with your driver: <span className="font-bold text-lg">{ride.verificationCode}</span>
+                </AlertDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={copyVerificationCode}>
+                <Clipboard className="h-4 w-4" />
+              </Button>
+            </div>
+          </Alert>
+        )}
+
         <div className="flex justify-between mt-4">
           <div
             className={`px-3 py-1 rounded-full text-xs
@@ -210,10 +242,18 @@ const RideCard = ({ ride }) => {
                   ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-400'
                   : ride.status === 'accepted'
                   ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-400'
+                  : ride.status === 'en_route'
+                  ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-800/20 dark:text-indigo-400'
+                  : ride.status === 'arrived'
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-400'
+                  : ride.status === 'in_progress'
+                  ? 'bg-teal-100 text-teal-800 dark:bg-teal-800/20 dark:text-teal-400'
                   : 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400'
               }`}
           >
-            {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+            {ride.status === 'en_route' ? 'En Route' : 
+             ride.status === 'in_progress' ? 'In Progress' : 
+             ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
           </div>
 
           {ride.status === 'accepted' && (
@@ -223,6 +263,12 @@ const RideCard = ({ ride }) => {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
+            </div>
+          )}
+          
+          {ride.status === 'en_route' && (
+            <div className="text-xs text-blue-600 dark:text-blue-400">
+              Driver is on the way
             </div>
           )}
         </div>
