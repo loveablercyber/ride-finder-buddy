@@ -35,6 +35,7 @@ const adminUser: User = {
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=random'
 };
 
+// Create a default context with initial values
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -43,9 +44,11 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
 });
 
+// Export the useAuth hook to be used in components
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Export the AuthProvider component
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
