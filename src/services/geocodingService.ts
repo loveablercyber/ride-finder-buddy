@@ -1,50 +1,23 @@
 
 import { Location, Route } from '@/types';
 
-// Interface para os resultados da API do Nominatim
-export interface NominatimResult {
-  place_id: number;
-  licence: string;
-  osm_type: string;
-  osm_id: number;
-  lat: string;
-  lon: string;
-  display_name: string;
-  address: {
-    road?: string;
-    suburb?: string;
-    city?: string;
-    state?: string;
-    postcode?: string;
-    country?: string;
-  };
-  boundingbox: string[];
-}
-
-// Geocodificar endereço para coordenadas
-export const geocodeAddress = async (query: string): Promise<Location | null> => {
+// Função para geocodificar um endereço (simulada)
+export const geocodeAddress = async (address: string): Promise<Location | null> => {
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`,
-      {
-        headers: {
-          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-          'User-Agent': 'IndriveLovableApp/1.0',
-        },
-      }
-    );
-
-    const data: NominatimResult[] = await response.json();
-
-    if (data.length === 0) {
-      return null;
-    }
-
-    const result = data[0];
+    // Em uma implementação real, aqui seria feita uma chamada a uma API de geocodificação
+    // como o Google Maps, Nominatim (OpenStreetMap), etc.
+    
+    // Simulação de geocodificação
+    console.log(`Geocoding address: ${address}`);
+    
+    // Adicionando um pouco de aleatoriedade para simular diferentes localizações
+    const randomLat = -23.55 + (Math.random() - 0.5) * 0.1;
+    const randomLng = -46.63 + (Math.random() - 0.5) * 0.1;
+    
     return {
-      longitude: parseFloat(result.lon),
-      latitude: parseFloat(result.lat),
-      address: result.display_name,
+      latitude: randomLat,
+      longitude: randomLng,
+      address: address, // Agora retornamos o endereço completo incluindo número e cidade
     };
   } catch (error) {
     console.error('Error geocoding address:', error);
@@ -52,37 +25,39 @@ export const geocodeAddress = async (query: string): Promise<Location | null> =>
   }
 };
 
-// Calcular a rota entre dois pontos
-export const calculateRoute = (pickup: Location, dropoff: Location): Route => {
-  // Calcular distância usando a fórmula de Haversine
-  const R = 6371; // Raio da Terra em km
-  const dLat = (dropoff.latitude - pickup.latitude) * Math.PI / 180;
-  const dLon = (dropoff.longitude - pickup.longitude) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(pickup.latitude * Math.PI / 180) * Math.cos(dropoff.latitude * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+// Calcular rota entre dois pontos (simulado)
+export const calculateRoute = (origin: Location, destination: Location): Route => {
+  // Em uma implementação real, aqui seria feita uma chamada a uma API de rotas
+  // como o Google Directions, OSRM, etc.
   
-  // Adicionar 30% para considerar que rotas reais não são em linha reta
-  const distance = R * c * 1.3;
-
-  // Criar pontos intermediários para a linha da rota
-  const steps = 4; // Número de pontos na rota
+  // Calcula a distância em linha reta (fórmula de Haversine)
+  const R = 6371; // Raio da Terra em km
+  const dLat = (destination.latitude - origin.latitude) * Math.PI / 180;
+  const dLon = (destination.longitude - origin.longitude) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(origin.latitude * Math.PI / 180) * Math.cos(destination.latitude * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c * 1.3; // Multiplica por 1.3 para simular a distância real (não em linha reta)
+  
+  // Assume uma velocidade média de 30km/h para calcular o tempo
+  const duration = (distance / 30) * 60 * 60; // Converte para segundos
+  
+  // Cria pontos intermediários para a rota
+  const numPoints = 10;
   const coordinates: [number, number][] = [];
   
-  for (let i = 0; i < steps; i++) {
-    const fraction = i / (steps - 1);
-    const intermediatePoint: [number, number] = [
-      pickup.longitude + fraction * (dropoff.longitude - pickup.longitude),
-      pickup.latitude + fraction * (dropoff.latitude - pickup.latitude)
-    ];
-    coordinates.push(intermediatePoint);
+  for (let i = 0; i <= numPoints; i++) {
+    const fraction = i / numPoints;
+    const lat = origin.latitude + fraction * (destination.latitude - origin.latitude);
+    const lng = origin.longitude + fraction * (destination.longitude - origin.longitude);
+    coordinates.push([lng, lat]);
   }
-
+  
   return {
     distance: parseFloat(distance.toFixed(2)),
-    duration: Math.round(distance * 3 * 60), // Estimativa: 3 min por km
+    duration: Math.floor(duration),
     geometry: {
       coordinates: coordinates
     }

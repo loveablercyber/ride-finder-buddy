@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Location, Route } from '@/types';
 import { geocodeAddress, calculateRoute } from '@/services/geocodingService';
 import { toast } from 'sonner';
+import CitySelector from './CitySelector';
 
 // Fix para ícones do Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -51,6 +52,9 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 }) => {
   const [pickupSearch, setPickupSearch] = useState('');
   const [dropoffSearch, setDropoffSearch] = useState('');
+  const [pickupNumber, setPickupNumber] = useState('');
+  const [dropoffNumber, setDropoffNumber] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [center, setCenter] = useState<[number, number]>([-23.5505, -46.6333]); // São Paulo
   const [zoom, setZoom] = useState(12);
   const [route, setRoute] = useState<Route | null>(null);
@@ -88,11 +92,34 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, [routeGeometry, route]);
 
+  // Função para lidar com a seleção de cidade
+  const handleCitySelect = (city: string) => {
+    setSelectedCity(city);
+  };
+
+  // Construir o endereço completo incluindo a cidade e o número
+  const buildFullAddress = (address: string, number: string, city: string) => {
+    let fullAddress = address;
+    
+    // Adicionar número se fornecido
+    if (number && number.trim()) {
+      fullAddress = `${fullAddress}, ${number.trim()}`;
+    }
+    
+    // Adicionar cidade se fornecida e ainda não estiver no endereço
+    if (city && city.trim() && !fullAddress.includes(city)) {
+      fullAddress = `${fullAddress}, ${city.trim()}`;
+    }
+    
+    return fullAddress;
+  };
+
   // Buscar localização por endereço
   const handleSearch = async (type: 'pickup' | 'dropoff') => {
-    const query = type === 'pickup' ? pickupSearch : dropoffSearch;
+    const baseAddress = type === 'pickup' ? pickupSearch : dropoffSearch;
+    const number = type === 'pickup' ? pickupNumber : dropoffNumber;
     
-    if (!query.trim()) {
+    if (!baseAddress.trim()) {
       toast.error(`Por favor, digite um ${type === 'pickup' ? 'local de partida' : 'destino'}`);
       return;
     }
@@ -100,10 +127,12 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     setIsSearching(true);
     
     try {
-      const location = await geocodeAddress(query);
+      // Incluir número e cidade no endereço de busca
+      const fullAddress = buildFullAddress(baseAddress, number, selectedCity);
+      const location = await geocodeAddress(fullAddress);
       
       if (!location) {
-        toast.error(`Não foi possível encontrar o endereço: ${query}`);
+        toast.error(`Não foi possível encontrar o endereço: ${fullAddress}`);
         return;
       }
       
@@ -202,38 +231,63 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
         </MapContainer>
       </div>
       
-      <div className="mt-4 space-y-2 animate-fade-in">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Digite o local de partida"
-            value={pickupSearch}
-            onChange={(e) => setPickupSearch(e.target.value)}
-            className="flex-1"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch('pickup')}
-          />
+      <div className="mt-4 space-y-4 animate-fade-in">
+        {/* Seletor de cidade */}
+        <CitySelector onCitySelect={handleCitySelect} />
+        
+        {/* Campo de busca de local de partida */}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Rua, Avenida, etc..."
+              value={pickupSearch}
+              onChange={(e) => setPickupSearch(e.target.value)}
+              className="flex-1"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch('pickup')}
+            />
+            <Input
+              placeholder="Número"
+              value={pickupNumber}
+              onChange={(e) => setPickupNumber(e.target.value)}
+              className="w-24"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch('pickup')}
+            />
+          </div>
           <Button 
             onClick={() => handleSearch('pickup')}
             disabled={isSearching || !pickupSearch.trim()}
             size="sm"
+            className="w-full"
           >
-            Buscar
+            Buscar local de partida
           </Button>
         </div>
         
-        <div className="flex gap-2">
-          <Input
-            placeholder="Digite o destino"
-            value={dropoffSearch}
-            onChange={(e) => setDropoffSearch(e.target.value)}
-            className="flex-1"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch('dropoff')}
-          />
+        {/* Campo de busca de destino */}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Rua, Avenida, etc..."
+              value={dropoffSearch}
+              onChange={(e) => setDropoffSearch(e.target.value)}
+              className="flex-1"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch('dropoff')}
+            />
+            <Input
+              placeholder="Número"
+              value={dropoffNumber}
+              onChange={(e) => setDropoffNumber(e.target.value)}
+              className="w-24"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch('dropoff')}
+            />
+          </div>
           <Button 
             onClick={() => handleSearch('dropoff')}
             disabled={isSearching || !dropoffSearch.trim()}
             size="sm"
+            className="w-full"
           >
-            Buscar
+            Buscar destino
           </Button>
         </div>
       </div>
